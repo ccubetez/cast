@@ -35,6 +35,9 @@ export default function CatchesPage() {
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-base font-bold text-white">Catch #{s.publicId}</span>
                     <Badge tone={s.status === 'CLOSED' ? 'neutral' : 'green'}>{s.status}</Badge>
+                    <Badge tone={c.id.startsWith('catch-real-') ? 'cyan' : 'amber'}>
+                      {c.id.startsWith('catch-real-') ? 'REAL' : 'SIM'}
+                    </Badge>
                     <Badge tone="violet">{c.riskMode.replace('_', ' ')}</Badge>
                   </div>
                   <span className="font-mono text-[10px] text-muted">seed {c.randomSeed.slice(-6)}</span>

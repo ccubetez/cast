@@ -54,6 +54,7 @@ export function CastControls({
   onCastPlan: (plan: CastPlan) => void;
 }) {
   const balance = useCastStore((s) => s.walletBalanceSol);
+  const walletAddress = useCastStore((s) => s.walletAddress);
   const loaded = useCastStore((s) => s.tokensLoaded);
   const tokens = useCastStore((s) => s.tokens);
   const risk = useCastStore((s) => s.risk);
@@ -71,7 +72,8 @@ export function CastControls({
   const poolSize = filterPool(toPoolTokens(tokens, risk), mode).length;
   const effectiveCount = Math.min(count, Math.max(0, poolSize));
   const effectiveAmount = isCustom ? Number.parseFloat(custom) || 0 : amount;
-  const canCast = loaded && !loading && effectiveAmount > 0 && effectiveAmount <= balance && effectiveCount >= 3;
+  // CAST требует подключённый кошелёк — симуляция без кошелька вводит в заблуждение
+  const canCast = Boolean(walletAddress) && loaded && !loading && effectiveAmount > 0 && effectiveAmount <= balance && effectiveCount >= 3;
 
   /** randomize → quote → exclude → re-run (тот же seed), до 3 итераций.
    *  С визуальной scry-фазой: per-token котировки, минимум 5 секунд. */
@@ -266,6 +268,9 @@ export function CastControls({
             >
               {loading ? 'SCRYING…' : 'CAST'}
             </Button>
+            {!walletAddress && (
+              <div className="font-mono text-[11px] text-amber">connect wallet (bottom-left) to cast</div>
+            )}
           </div>
         </div>
         {error && <div className="mt-2 font-mono text-xs text-loss">{error}</div>}
@@ -274,7 +279,10 @@ export function CastControls({
       {plan && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={() => setPlan(null)}>
           <div className="max-h-[86vh] w-[min(92vw,480px)] overflow-y-auto etched corner-gem bg-panel p-5" onClick={(e) => e.stopPropagation()}>
-            <div className="ornament mb-3">confirm cast</div>
+            <div className="ornament mb-2">confirm cast</div>
+            <div className="mb-3 border border-amber/40 bg-amber/5 px-3 py-2 font-mono text-[11px] uppercase tracking-wider text-amber">
+              simulation — no real funds move. Real buy: SWAP page (multi-cast)
+            </div>
             <div className="space-y-1.5 font-mono text-sm">
               <Row k="You are spending" v={`${fmtSol(effectiveAmount)} SOL`} strong />
               <Row k="Tokens" v={String(plan.allocations.length)} />
