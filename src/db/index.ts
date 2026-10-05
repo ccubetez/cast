@@ -10,7 +10,17 @@ import * as schema from './schema';
 
 const url = process.env['DATABASE_URL'];
 
-const client = url ? postgres(url, { max: 5, connect_timeout: 3 }) : null;
+// Railway Postgres (postgres-ssl template) требует SSL с self-signed cert;
+// локальный docker postgres — без SSL.
+const needsSsl = url?.includes('railway') ?? false;
+
+const client = url
+  ? postgres(url, {
+      max: 5,
+      connect_timeout: 3,
+      ...(needsSsl ? { ssl: { rejectUnauthorized: false } } : {}),
+    })
+  : null;
 
 export const db = client ? drizzle(client, { schema }) : null;
 
