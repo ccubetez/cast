@@ -6,7 +6,6 @@ import { fmtSol } from '@/lib/format';
 
 /** Верхняя статусная строка SANCTUM-84. */
 export function StatusBar() {
-  const simBalance = useCastStore((s) => s.walletBalanceSol);
   const walletAddress = useCastStore((s) => s.walletAddress);
   const mainnetBalance = useCastStore((s) => s.mainnetBalanceSol);
   const verified = useCastStore((s) => s.walletVerified);
@@ -38,10 +37,12 @@ export function StatusBar() {
       </div>
       <div className="flex items-center gap-4">
         {verified && <span className="text-profit">✓ SIG</span>}
-        <span>
-          {walletAddress ? 'REAL' : 'SIM'}{' '}
-          <span className="text-sm font-bold text-phos glow-bone">{fmtSol(walletAddress ? (mainnetBalance ?? 0) : simBalance)} SOL</span>
-        </span>
+        {walletAddress && (
+          <span>
+            REAL{' '}
+            <span className="text-sm font-bold text-phos glow-bone">{fmtSol(mainnetBalance ?? 0)} SOL</span>
+          </span>
+        )}
         <span className="text-dim">{clock}</span>
         <span className="blink text-phos">▊</span>
       </div>

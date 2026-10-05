@@ -88,38 +88,43 @@ export async function executePullOut(catchId: string, scope: PullScope, position
   const catch_ = store().catches.find((c) => c.id === catchId);
   if (!catch_) return;
 
-  const tokens = new Map(store().tokens.map((t) => [t.mint, t]));
-  const targets = catch_.positions.filter((p) => {
-    if (p.status !== 'FILLED') return false;
-    if (scope === 'TOKEN') return p.id === positionId;
-    if (scope === 'ALL') return true;
-    const token = tokens.get(p.tokenMint);
-    const live = p.tokenAmount !== null && token?.priceSol ? p.tokenAmount * token.priceSol : p.allocationSol;
-    const pnl = live - (p.entryValueSol ?? p.allocationSol);
-    return scope === 'WINNERS' ? pnl > 0 : pnl < 0;
-  });
-  if (targets.length === 0) return;
+  try {
+    const tokens = new Map(store().tokens.map((t) => [t.mint, t]));
+    const targets = catch_.positions.filter((p) => {
+      if (p.status !== 'FILLED') return false;
+      if (scope === 'TOKEN') return p.id === positionId;
+      if (scope === 'ALL') return true;
+      const token = tokens.get(p.tokenMint);
+      const live = p.tokenAmount !== null && token?.priceSol ? p.tokenAmount * token.priceSol : p.allocationSol;
+      const pnl = live - (p.entryValueSol ?? p.allocationSol);
+      return scope === 'WINNERS' ? pnl > 0 : pnl < 0;
+    });
+    if (targets.length === 0) return;
 
-  store().beginExecution(execId, 'sell');
-  const advance = (state: ExecutionState, message: string) =>
-    store().advanceExecution(execId, state, message);
+    store().beginExecution(execId, 'sell');
+    const advance = (state: ExecutionState, message: string) =>
+      store().advanceExecution(execId, state, message);
 
-  advance('PREPARING', `preparing ${targets.length} sell routes`);
-  await sleep(jitter(300));
-  advance('WAITING_FOR_SIGNATURE', 'simulation — no wallet signature required');
-  await sleep(jitter(300));
+    advance('PREPARING', `preparing ${targets.length} sell routes`);
+    await sleep(jitter(300));
+    advance('WAITING_FOR_SIGNATURE', 'simulation — no wallet signature required');
+    await sleep(jitter(300));
 
-  for (let i = 0; i < targets.length; i++) {
-    const pos = targets[i];
-    if (!pos) continue;
-    advance('EXECUTING', `selling ${pos.symbol} — ${i + 1}/${targets.length}`);
-    store().markSelling(catchId, pos.id);
-    await sleep(jitter(420)); // bubble-out анимация идёт параллельно
-    store().pullOutPosition(catchId, pos.id);
-    await sleep(120);
+    for (let i = 0; i < targets.length; i++) {
+      const pos = targets[i];
+      if (!pos) continue;
+      advance('EXECUTING', `selling ${pos.symbol} — ${i + 1}/${targets.length}`);
+      store().markSelling(catchId, pos.id);
+      await sleep(jitter(420)); // bubble-out анимация идёт параллельно
+      store().pullOutPosition(catchId, pos.id);
+      await sleep(120);
+    }
+
+    const after = store().catches.find((c) => c.id === catchId);
+    const allClosed = after?.positions.every((p) => p.status === 'SOLD' || p.status === 'FAILED') ?? false;
+    advance('COMPLETED', allClosed ? 'catch closed · proceeds returned' : `${targets.length} positions sold`);
+  } catch (e) {
+    // безопасный выход: иначе exec навсегда остается !done и блокирует кнопки
+    store().advanceExecution(execId, 'FAILED', e instanceof Error ? e.message : 'sell failed');
   }
-
-  const after = store().catches.find((c) => c.id === catchId);
-  const allClosed = after?.positions.every((p) => p.status === 'SOLD' || p.status === 'FAILED') ?? false;
-  advance('COMPLETED', allClosed ? 'catch closed · proceeds returned' : `${targets.length} positions sold`);
 }

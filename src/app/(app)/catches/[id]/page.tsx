@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useMemo, useState } from 'react';
+import { use, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useCastStore, selectTokensByMint } from '@/lib/store';
 import { catchView, type PositionView } from '@/lib/derive';
@@ -29,11 +29,38 @@ export default function CatchDetailPage({ params }: { params: Promise<{ id: stri
   const isReal = id.startsWith('catch-real-');
   const [realTrigger, setRealTrigger] = useState<{ scope: PullScope; positionId?: string; nonce: number } | null>(null);
   const [sellSlippage, setSellSlippage] = useState(1000);
-  const busy = isSelling || realTrigger !== null;
 
-  /** Phase 7/11: sim — через engine; real — через on-chain sell-build + signAll. */
+  // ── перетаскивание шариков ──
+  const [dragOffsets, setDragOffsets] = useState<Record<string, { dx: number; dy: number }>>({});
+  const dragMoved = useRef(false);
+  const beginDrag = (e: React.PointerEvent, posId: string) => {
+    e.preventDefault();
+    dragMoved.current = false;
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const base = dragOffsets[posId] ?? { dx: 0, dy: 0 };
+    const onMove = (ev: PointerEvent) => {
+      const dx = base.dx + ev.clientX - startX;
+      const dy = base.dy + ev.clientY - startY;
+      if (Math.abs(ev.clientX - startX) + Math.abs(ev.clientY - startY) > 6) dragMoved.current = true;
+      setDragOffsets((prev) => ({ ...prev, [posId]: { dx, dy } }));
+    };
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      // сбрасываем флаг после click-события
+      setTimeout(() => { dragMoved.current = false; }, 0);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  };
+  const busy = isSelling;
+
+  /** Phase 7/11: sim — через engine; real — через on-chain sell-build + signAll.
+   *  Повторный клик разрешён: блокирует только АКТИВНАЯ продажа;
+   *  новый trigger (свежий nonce) честно перезапускает RealPullOut. */
   const startPull = (scope: PullScope, positionId?: string) => {
-    if (busy) return;
+    if (isSelling) return;
     setSelectedId(null);
     if (isReal) {
       setRealTrigger({ scope, ...(positionId !== undefined ? { positionId } : {}), nonce: Date.now() });
@@ -120,36 +147,42 @@ export default function CatchDetailPage({ params }: { params: Promise<{ id: stri
         )}
       </div>
 
-      {/* bubble field */}
-      <div className="relative mt-4 min-h-[420px] flex-1 rounded-xl border border-line bg-panel/40">
+      {/* bubble field: плавают, перетаскиваются */}
+      <div className="relative mt-4 min-h-[420px] flex-1 overflow-hidden rounded-xl border border-line bg-panel/40">
         {bubbles.map(({ pos, x, y, r }, i) => {
           const pnl = pos.pnlPct ?? 0;
           const color = !pos.open ? '#3A3A40' : pnl >= 0 ? '#33FF66' : '#FF4444';
           const selling = pos.status === 'SELLING';
+          const off = dragOffsets[pos.id] ?? { dx: 0, dy: 0 };
           return (
-            <button
+            <div
               key={pos.id}
-              onClick={() => setSelectedId(pos.id)}
-              className={cn(
-                'absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full border transition-transform hover:scale-110',
-                selectedId === pos.id && 'ring-2 ring-white/70',
-                selling ? 'bubble-out' : 'bubble-in',
-              )}
-              style={{
-                animationDelay: selling ? '0ms' : `${i * 85}ms`,
-                left: `${x}%`,
-                top: `${y}%`,
-                width: r * 2,
-                height: r * 2,
-                backgroundColor: `${color}22`,
-                borderColor: `${color}88`,
-                boxShadow: pos.open ? `0 0 ${Math.abs(pnl) / 2 + 6}px ${color}33` : undefined,
-                opacity: pos.open ? 1 : 0.45,
-              }}
+              className="absolute"
+              style={{ left: `${x}%`, top: `${y}%`, transform: `translate(calc(-50% + ${off.dx}px), calc(-50% + ${off.dy}px))` }}
             >
-              <span className="font-mono text-[11px] font-bold text-white">{pos.symbol}</span>
-              <span className="font-mono text-[10px]" style={{ color }}>{fmtPct(pos.pnlPct)}</span>
-            </button>
+              <button
+                onClick={() => { if (!dragMoved.current) setSelectedId(pos.id); }}
+                onPointerDown={(e) => beginDrag(e, pos.id)}
+                className={cn(
+                  'bubble-drag bubble-float flex flex-col items-center justify-center rounded-full border transition-transform hover:scale-110',
+                  selectedId === pos.id && 'ring-2 ring-white/70',
+                  selling ? 'bubble-out' : 'bubble-in',
+                )}
+                style={{
+                  animationDelay: selling ? '0ms' : `${i * 85}ms, ${i * 700}ms`,
+                  animationDuration: selling ? undefined : `0.5s, ${4.5 + (i % 5) * 0.9}s`,
+                  width: r * 2,
+                  height: r * 2,
+                  backgroundColor: `${color}22`,
+                  borderColor: `${color}88`,
+                  boxShadow: pos.open ? `0 0 ${Math.abs(pnl) / 2 + 6}px ${color}33` : undefined,
+                  opacity: pos.open ? 1 : 0.45,
+                }}
+              >
+                <span className="font-mono text-[11px] font-bold text-white">{pos.symbol}</span>
+                <span className="font-mono text-[10px]" style={{ color }}>{fmtPct(pos.pnlPct)}</span>
+              </button>
+            </div>
           );
         })}
 
