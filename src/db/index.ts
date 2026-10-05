@@ -10,9 +10,9 @@ import * as schema from './schema';
 
 const url = process.env['DATABASE_URL'];
 
-// Railway Postgres (postgres-ssl template) требует SSL с self-signed cert;
-// локальный docker postgres — без SSL.
-const needsSsl = url?.includes('railway') ?? false;
+// Railway Postgres требует SSL с self-signed cert (postgres.railway.internal
+// и *.proxy.rlwy.net); локальный docker postgres — без SSL.
+const needsSsl = (url?.includes('railway') || url?.includes('rlwy.net')) ?? false;
 
 const client = url
   ? postgres(url, {
