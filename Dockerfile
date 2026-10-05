@@ -31,6 +31,7 @@ RUN addgroup -S cast && adduser -S cast -G cast
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=cast:cast /app/.next/standalone ./
 COPY --from=builder --chown=cast:cast /app/.next/static ./.next/static
+COPY --from=builder --chown=cast:cast /app/scripts/migrate.mjs ./scripts/migrate.mjs
 
 USER cast
 EXPOSE 3100
@@ -38,4 +39,5 @@ EXPOSE 3100
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s \
   CMD wget -qO- http://127.0.0.1:3100/api/health || exit 1
 
-CMD ["node", "server.js"]
+# миграция (идемпотентна) → сервер
+CMD ["sh", "-c", "node scripts/migrate.mjs && node server.js"]

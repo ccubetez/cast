@@ -7,5 +7,4 @@ node_modules
 *.tsbuildinfo
 .DS_Store
 docs
-scripts
 docker-compose.yml
