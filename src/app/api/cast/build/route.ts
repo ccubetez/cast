@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/server/auth';
+import { tradingDisabledResponse } from '@/lib/server/trading-guard';
 import { buildSwapTransaction, getRawQuote, SOL_MINT } from '@/services/swap/jupiter';
 import { getBalanceSol } from '@/services/swap/helius-mainnet';
 import { getTokenFeed } from '@/services/token-data/ingestion';
@@ -54,6 +55,9 @@ export async function POST(req: Request) {
   // auth: wallet в запросе должен совпадать с wallet сессии
   const authError = requireAuth(req, walletAddress);
   if (authError) return authError;
+
+  const tradingOff = tradingDisabledResponse();
+  if (tradingOff) return tradingOff;
 
   const feed = await getTokenFeed();
 

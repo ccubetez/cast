@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { rateLimitResponse } from '@/lib/server/rate-limit';
 import { requireAuth } from '@/lib/server/auth';
+import { tradingDisabledResponse } from '@/lib/server/trading-guard';
 import { confirmTransaction, sendRawTransaction } from '@/services/swap/helius-mainnet';
 
 export const dynamic = 'force-dynamic';
@@ -28,6 +29,9 @@ export async function POST(req: Request) {
   // auth: подпись транзакции — в кошельке, но релей только для авторизованных сессий
   const authError = requireAuth(req);
   if (authError) return authError;
+
+  const tradingOff = tradingDisabledResponse();
+  if (tradingOff) return tradingOff;
 
   let signature: string;
   try {
