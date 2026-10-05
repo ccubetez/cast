@@ -1,0 +1,283 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #0a0a0b;
+  --panel: #131315;
+  --line: rgba(232, 230, 225, 0.1);
+  --fg: #c9c9ce;
+  --muted: #aab0ab;
+  --dim: #7a7a82;
+  --bone: #e8e6e1;
+  --ash: #9a9aa0;
+}
+
+html {
+  font-size: 110%; /* +10% глобального масштаба шрифтов (все rem-размеры) */
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--fg);
+  min-height: 100vh;
+}
+
+/* ── готические узоры ── */
+
+/* tracery: решётка + точки пересечений (каменное кружево собора) */
+.ocean-grid {
+  background-image:
+    radial-gradient(circle at 50% 50%, rgba(232, 230, 225, 0.035) 1px, transparent 1.6px),
+    linear-gradient(rgba(232, 230, 225, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(232, 230, 225, 0.025) 1px, transparent 1px);
+  background-size:
+    24px 24px,
+    48px 48px,
+    48px 48px;
+}
+
+/* диагональная кладка для лендинга */
+.masonry {
+  background-image:
+    repeating-linear-gradient(45deg, rgba(232, 230, 225, 0.018) 0 1px, transparent 1px 12px),
+    repeating-linear-gradient(-45deg, rgba(232, 230, 225, 0.018) 0 1px, transparent 1px 12px);
+}
+
+.noise::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+}
+
+/* ── techno-слой (CRT, приглушён) ── */
+.crt-scanlines {
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.22) 0px,
+    rgba(0, 0, 0, 0.22) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  opacity: 0.3;
+}
+
+.crt-vignette {
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(0, 0, 0, 0.42) 100%);
+}
+
+@keyframes crt-flicker {
+  0%, 92%, 100% { opacity: 1; }
+  93% { opacity: 0.985; }
+  96% { opacity: 0.995; }
+}
+.crt-flicker {
+  animation: crt-flicker 5s linear infinite;
+}
+
+/* ── свеча: неровное живое пламя на акцентах ── */
+@keyframes candle {
+  0%, 100% { opacity: 1; }
+  41% { opacity: 0.88; }
+  43% { opacity: 0.96; }
+  60% { opacity: 0.82; }
+  62% { opacity: 0.94; }
+  78% { opacity: 0.9; }
+}
+.candle {
+  animation: candle 3.7s ease-in-out infinite;
+}
+
+/* ── туман: два медленных слоя ── */
+@keyframes fog-drift-a {
+  0% { transform: translateX(-6%) translateY(0); }
+  50% { transform: translateX(5%) translateY(-2%); }
+  100% { transform: translateX(-6%) translateY(0); }
+}
+@keyframes fog-drift-b {
+  0% { transform: translateX(5%) translateY(1%); }
+  50% { transform: translateX(-5%) translateY(-1%); }
+  100% { transform: translateX(5%) translateY(1%); }
+}
+.fog-a {
+  background: radial-gradient(ellipse 60% 40% at 30% 70%, rgba(200, 200, 205, 0.045), transparent 70%);
+  animation: fog-drift-a 47s ease-in-out infinite;
+}
+.fog-b {
+  background: radial-gradient(ellipse 55% 45% at 70% 30%, rgba(200, 200, 205, 0.035), transparent 70%);
+  animation: fog-drift-b 61s ease-in-out infinite;
+}
+
+/* свечение кости */
+.glow-bone { text-shadow: 0 0 6px rgba(232, 230, 225, 0.5), 0 0 22px rgba(232, 230, 225, 0.18); }
+.glow-ash { text-shadow: 0 0 6px rgba(154, 154, 160, 0.4), 0 0 18px rgba(154, 154, 160, 0.15); }
+
+/* мигающий блочный курсор */
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+.blink {
+  animation: blink 1.1s steps(1) infinite;
+}
+
+/* etched border — камень с внутренней резьбой */
+.etched {
+  border: 1px solid var(--line);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.65),
+    inset 0 0 24px rgba(232, 230, 225, 0.03);
+}
+
+/* орнаментальный разделитель: ── ✦ ── */
+.ornament {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.3em;
+}
+.ornament::before,
+.ornament::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--line);
+}
+
+/* угловой ромб-орнамент для панелей */
+.corner-gem {
+  position: relative;
+}
+.corner-gem::before {
+  content: '✦';
+  position: absolute;
+  top: -7px;
+  left: 12px;
+  background: var(--panel);
+  padding: 0 4px;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-thumb { background: rgba(232, 230, 225, 0.16); }
+*::-webkit-scrollbar-track { background: transparent; }
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+.animate-pulse-soft {
+  animation: pulse-soft 2.4s ease-in-out infinite;
+}
+
+/* ── Boot sequence ── */
+@keyframes crt-on {
+  0% { transform: scaleY(0.004) scaleX(0.6); filter: brightness(6); }
+  40% { transform: scaleY(0.004) scaleX(1); filter: brightness(6); }
+  70% { transform: scaleY(1); filter: brightness(1.6); }
+  100% { transform: scaleY(1); filter: brightness(1); }
+}
+.crt-on {
+  animation: crt-on 0.9s cubic-bezier(0.25, 0.8, 0.3, 1) forwards;
+  transform-origin: center;
+}
+@keyframes boot-line-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.boot-line {
+  animation: boot-line-in 0.05s steps(1) backwards;
+}
+
+/* ── Scry (поиск перед CAST) ── */
+@keyframes scry-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.scry-beam {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 300deg,
+    rgba(232, 230, 225, 0.02) 320deg,
+    rgba(232, 230, 225, 0.22) 355deg,
+    rgba(232, 230, 225, 0.5) 360deg
+  );
+  animation: scry-rotate 1.8s linear infinite;
+}
+@keyframes scry-blip-in {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.6); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.scry-blip {
+  animation: scry-blip-in 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.4) backwards;
+}
+@keyframes scry-ring-pulse {
+  0% { transform: scale(0.85); opacity: 0.35; }
+  100% { transform: scale(1.15); opacity: 0; }
+}
+.scry-pulse-ring {
+  animation: scry-ring-pulse 2.6s ease-out infinite;
+}
+
+/* ── CAST Moment (pack B) ── */
+@keyframes cast-wave {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(40); opacity: 0; }
+}
+.cast-wave {
+  animation: cast-wave 1.6s cubic-bezier(0.2, 0.6, 0.3, 1) forwards;
+}
+.cast-wave-delay {
+  animation-delay: 0.35s;
+}
+@keyframes cast-beam-in {
+  0% { stroke-dasharray: 0 1000; opacity: 0; }
+  30% { opacity: 1; }
+  100% { stroke-dasharray: 1000 0; opacity: 0.5; }
+}
+.cast-beam {
+  animation: cast-beam-in 0.45s ease-out forwards;
+}
+@keyframes cast-flash-in {
+  0% { r: 4; stroke-opacity: 1; }
+  100% { r: 26; stroke-opacity: 0; }
+}
+.cast-flash {
+  animation: cast-flash-in 0.7s ease-out forwards;
+}
+@keyframes cast-label-in {
+  0% { opacity: 0; transform: translateX(-50%) translateY(6px); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+.cast-label {
+  animation: cast-label-in 0.35s ease-out forwards;
+}
+
+/* ── Catch Detail bubbles ── */
+@keyframes bubble-in {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+  70% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+.bubble-in {
+  animation: bubble-in 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.4) backwards;
+}
+@keyframes bubble-out {
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, calc(-50% - 90px)) scale(1.25); opacity: 0; }
+}
+.bubble-out {
+  animation: bubble-out 0.45s ease-in forwards;
+  pointer-events: none;
+}

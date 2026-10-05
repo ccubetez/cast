@@ -1,0 +1,13 @@
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# секреты — НЕ коммитить
+.env
+.env.local
+.env*.local
+
+# misc
+.DS_Store
