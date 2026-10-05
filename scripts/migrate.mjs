@@ -66,12 +66,13 @@ CREATE INDEX IF NOT EXISTS positions_catch_idx ON positions (catch_id);
 
 const sql = postgres(url, { max: 1, connect_timeout: 20, ssl: { rejectUnauthorized: false } });
 try {
-  await sql.unsafe(SQL);
+  // multi-statement SQL → simple query protocol
+  await sql.unsafe(SQL, [], { simple: true });
   const tables = await sql`SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY 1`;
   console.log('[migrate] ok. tables:', tables.map((t) => t.table_name).join(', '));
 } catch (e) {
   // миграция идемпотентна; фейл не должен ронять старт приложения
-  console.warn('[migrate] failed (non-fatal):', e.message, e.code ?? '');
+  console.warn('[migrate] failed (non-fatal):', JSON.stringify({ msg: e.message, code: e.code, detail: e.detail ?? null }));
 } finally {
   await sql.end();
 }
