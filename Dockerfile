@@ -31,6 +31,9 @@ RUN addgroup -S cast && adduser -S cast -G cast
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=cast:cast /app/.next/standalone ./
 COPY --from=builder --chown=cast:cast /app/.next/static ./.next/static
+# nft-трейсинг standalone пропускает DB-драйвер — копируем явно
+COPY --from=deps --chown=cast:cast /app/node_modules/postgres ./node_modules/postgres
+COPY --from=deps --chown=cast:cast /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
 COPY --from=builder --chown=cast:cast /app/scripts/migrate.mjs ./scripts/migrate.mjs
 
 USER cast
